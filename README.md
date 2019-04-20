@@ -8,11 +8,8 @@
 ## 使用
 **安装**
 
-`go get github.com/yryz/httpproxy`
+`go get github.com/fuzengjie/httpproxy`
 
-或者
-
-`curl -L https://github.com/yryz/httpproxy/releases/download/v1.1/httpproxy-linux64.tar.gz | tar -xz -C /usr/local/bin`
 
 配置文件 ~/.httpproxy/config.json（这里是默认配置，也可以通过 httpproxy -c config.json 来指定）
 
@@ -21,7 +18,8 @@
         "listen": "127.0.0.1:6666",
         "ss_server": "ip:port",
         "ss_cipher": "aes-128-cfb",
-        "ss_password": "your password"
+        "ss_password": "your password",
+	"auth":[{"user":"your username","pwd":"your password"}]
 }
 ```
 启动 `httpproxy`
@@ -43,10 +41,4 @@ https_proxy=http://127.0.0.1:6666
 * 支持与shadowsocks服务桥接
 * 支持CONNECT，支持HTTPS、HTTP2代理
 * 简单易用、命令行友好
-
-## TODO
-* 抓包分析、支持HTTPS
-* 支持代理开关，不用每次手动设置代理地址
-* 支持自定义白名单
-* 增加私有IP、主机的过滤
-* 增加授权机制：用户名验证或IP白名单
+* 支持用户验证

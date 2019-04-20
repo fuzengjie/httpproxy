@@ -1,12 +1,14 @@
 package proxy
 
 import (
+	"encoding/base64"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
+	"strings"
 
-	"github.com/yryz/httpproxy/config"
+	"github.com/fuzengjie/httpproxy/config"
 
 	ss "github.com/shadowsocks/shadowsocks-go/shadowsocks"
 	log "github.com/sirupsen/logrus"
@@ -38,20 +40,29 @@ func (p *ProxyServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if err := recover(); err != nil {
 			http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
-			log.Debugf("panic: %v\n", err)
+			log.Debugf("panic: 代理服务错误:%v\n", err)
 		}
 	}()
-
-	if r.Method == "CONNECT" {
-		p.HandleConnect(w, r)
+	auth := p.Auth(r)
+	if !auth {
+		log.Errorf("client %s proxy auth faild",r.RemoteAddr)
+		w.Header().Add("Proxy-Authenticate","Basic realm=User Auth")
+		w.Header().Add("Server","FuZZ inc")
+		w.WriteHeader(407)
+		w.Write([]byte("用户验证失败"))
 	} else {
-		p.HandleHttp(w, r)
+		if r.Method == "CONNECT" {
+			p.HandleConnect(w, r)
+		} else {
+			p.HandleHttp(w, r)
+		}
 	}
+
 }
 
 // 处理HTTPS、HTTP2代理请求
 func (p *ProxyServer) HandleConnect(w http.ResponseWriter, r *http.Request) {
-	log.Infof("%s %s", r.Method, r.Host)
+	log.Infof("https handler:  %s %s", r.Method, r.Host)
 
 	hj, _ := w.(http.Hijacker)
 	conn, _, err := hj.Hijack()
@@ -76,7 +87,7 @@ func (p *ProxyServer) HandleConnect(w http.ResponseWriter, r *http.Request) {
 
 // 处理HTTP代理请求
 func (p *ProxyServer) HandleHttp(w http.ResponseWriter, r *http.Request) {
-	log.Infof("%s %s", r.Method, r.URL)
+	log.Infof("http handler: %s %s", r.Method, r.URL)
 
 	// ss proxy
 	tr := http.Transport{
@@ -110,4 +121,32 @@ func (p *ProxyServer) HandleHttp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Infof("copied %v bytes from %v.", n, r.Host)
+}
+
+func (p *ProxyServer) Auth(r *http.Request) bool {
+	auth := r.Header.Get("Proxy-Authorization")
+	log.Error("auth:",auth,)
+	auth = strings.Replace(auth, "Basic ", "", 1)
+	if auth == "" {
+		return false
+	}
+	data, err := base64.StdEncoding.DecodeString(auth)
+	if err != nil {
+		log.Debug("Fail to decoding Proxy-Authorization, %v, got an error of %v", auth, err)
+		return false
+	}
+	userPasswdPair := strings.Split(string(data), ":")
+	if len(userPasswdPair) != 2 {
+		return false
+	}
+	var user, passwd string
+	user = userPasswdPair[0]
+	passwd = userPasswdPair[1]
+	for _,auth := range config.Conf.Auth {
+		if auth.User == user && auth.Pwd == passwd {
+			log.Debugf("proxy user:%s auth success",user)
+			return true
+		}
+	}
+	return false
 }

@@ -14,6 +14,13 @@ type Config struct {
 	SsServer   string `json:"ss_server"`
 	SsCipher   string `json:"ss_cipher"`
 	SsPassword string `json:"ss_password"`
+	Auth       []struct{
+		User string `json:"user"`
+		Pwd string `json:"pwd"`
+	} `json:"auth"`
+	Access	[]string `json:"access"`
+	Deny	[]string `json:"deny"`
+
 }
 
 var Conf = &Config{Listen: "127.0.0.1:6666"}
