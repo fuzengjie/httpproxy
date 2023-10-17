@@ -1,0 +1,9 @@
+{
+  "listen": "0.0.0.0:8431",
+  "ss_server": "10.55.150.30:8431",
+  "ss_cipher": "aes-256-cfb",
+  "ss_password": "ifKPQuB0XSRfxE8G",
+  "auth":[{"user":"fuck","pwd":"123.comYD"}],
+  "access":[],
+  "deny":[]
+}

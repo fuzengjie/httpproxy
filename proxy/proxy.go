@@ -7,9 +7,7 @@ import (
 	"net"
 	"net/http"
 	"strings"
-
-	"github.com/fuzengjie/httpproxy/config"
-
+	"httpproxy/config"
 	ss "github.com/shadowsocks/shadowsocks-go/shadowsocks"
 	log "github.com/sirupsen/logrus"
 )
@@ -124,6 +122,10 @@ func (p *ProxyServer) HandleHttp(w http.ResponseWriter, r *http.Request) {
 }
 
 func (p *ProxyServer) Auth(r *http.Request) bool {
+	if len(config.Conf.Auth) == 0 {
+		log.Infof("config not found auth")
+		return true
+	}
 	auth := r.Header.Get("Proxy-Authorization")
 	log.Error("auth:",auth,)
 	auth = strings.Replace(auth, "Basic ", "", 1)

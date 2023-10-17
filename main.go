@@ -4,8 +4,8 @@ import (
 	"os"
 	"syscall"
 
-	"github.com/fuzengjie/httpproxy/config"
-	"github.com/fuzengjie/httpproxy/proxy"
+	"httpproxy/config"
+	"httpproxy/proxy"
 
 	log "github.com/sirupsen/logrus"
 )
